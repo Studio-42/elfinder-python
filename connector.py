@@ -51,14 +51,21 @@ form = cgi.FieldStorage()
 for field in elf.httpAllowedParameters:
 	if field in form:
 		httpRequest[field] = form.getvalue(field)
+
+		# Django hack by Kidwind
+		if field == 'targets[]' and hasattr(form, 'getlist'):
+			httpRequest[field] = form.getlist(field)
+
+		# handle CGI upload
 		if field == 'upload[]':
 			upFiles = {}
-			cgiUploadFiles = form['upload[]']
+			cgiUploadFiles = form[field]
+			if not isinstance(cgiUploadFiles, list):
+				cgiUploadFiles = [cgiUploadFiles]
 			for up in cgiUploadFiles:
 				if up.filename:
 					upFiles[up.filename] = up.file # pack dict(filename: filedescriptor)
-			httpRequest['upload[]'] = upFiles
-
+			httpRequest[field] = upFiles
 
 
 # run connector with parameters
