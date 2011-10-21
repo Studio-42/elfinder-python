@@ -42,7 +42,10 @@ class connector():
 		},
 		'perms': {},
 		'archiveMimes': {},
-		'archivers': {},
+		'archivers': {
+			'create': {},
+			'extract': {}
+		},
 		'disabled': [],
 		'debug': False
 	}
@@ -112,15 +115,10 @@ class connector():
 	httpResponse = None
 
 	def __init__(self, opts):
-		self._time = time.time()
-		t = datetime.fromtimestamp(self._time)
-		self._today = time.mktime(datetime(t.year, t.month, t.day).timetuple())
-		self._yesterday = self._today - 86400
-
-		self._response['debug'] = {}
-
 		for opt in opts:
 			self._options[opt] = opts.get(opt)
+
+		self._response['debug'] = {}
 
 		self._options['URL'] = self._options['URL'].rstrip('/')
 		self._options['root'] = self._options['root'].rstrip(os.sep)
@@ -137,8 +135,27 @@ class connector():
 				self._options['tmbDir'] = False
 
 
+	def __reset(self):
+		"""Flush per request variables"""
+		self.httpStatusCode = 0
+		self.httpHeader = {}
+		self.httpResponse = None
+		self._request = {}
+		self._response = {}
+		self._errorData = {}
+		self._form = {}
+
+		self._time = time.time()
+		t = datetime.fromtimestamp(self._time)
+		self._today = time.mktime(datetime(t.year, t.month, t.day).timetuple())
+		self._yesterday = self._today - 86400
+
+		self._response['debug'] = {}
+
+
 	def run(self, httpRequest = []):
 		"""main function"""
+		self.__reset()
 		rootOk = True
 		if not os.path.exists(self._options['root']) or self._options['root'] == '':
 			rootOk = False
@@ -177,11 +194,10 @@ class connector():
 				self._response['params'] = {
 					'dotFiles': self._options['dotFiles'],
 					'uplMaxSize': str(self._options['uploadMaxSize']) + 'M',
-					'archives': self._options['archiveMimes'],
+					'archives': self._options['archivers']['create'].keys(),
 					'extract': self._options['archivers']['extract'].keys(),
 					'url': url
 				}
-
 
 		if self._errorData:
 			self._response['errorData'] = self._errorData
@@ -1357,8 +1373,11 @@ class connector():
 		# out, err = sp.communicate()
 		# print 'out:', out, '\nerr:', err, '\n'
 		archive = { 'create': {}, 'extract': {} }
-		c = archive['create']
-		e = archive['extract']
+
+		if 'archive' in self._options['disabled'] and 'extract' in self._options['disabled']:
+			self._options['archiveMimes'] = []
+			self._options['archivers'] = archive
+			return
 
 		tar = self.__runSubProcess(['tar', '--version'])
 		gzip = self.__runSubProcess(['gzip', '--version'])
@@ -1374,6 +1393,9 @@ class connector():
 		# tar = False
 		# tar = gzip = bzip2 = zipc = unzip = rar = unrar = False
 		# print tar, gzip, bzip2, zipc, unzip, rar, unrar, p7z, p7za, p7zr
+
+		c = archive['create']
+		e = archive['extract']
 
 		if tar:
 			mime = 'application/x-tar'
@@ -1455,8 +1477,8 @@ class connector():
 			self._sp = subprocess
 
 		try:
-			sp = self._sp.Popen(cmd, shell = False, stdout = self._sp.PIPE, stderr = self._sp.PIPE)
-			out, err = sp.communicate()
+			sp = self._sp.Popen(cmd, shell = False, stdout = self._sp.PIPE, stderr = self._sp.PIPE, stdin = self._sp.PIPE)
+			out, err = sp.communicate('')
 			ret = sp.returncode
 			# print cmd, ret, out, err
 		except:

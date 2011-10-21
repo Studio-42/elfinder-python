@@ -1,15 +1,22 @@
 #!/usr/bin/env python
 
-
 import cgi
-import json
+## CGI debug
+# import cgitb
+# cgitb.enable()
+try:
+	import json
+except ImportError:
+	import simplejson as json
 import elFinder
 
 # configure connector options
 opts = {
-	#'root': '/home/troex/Sites/git/elfinder/files',
-	'root': '../elfinder-2.x/files/',
-	'URL': '../elfinder-2.x/files/',
+	## required options
+	# 'root': '/path/to/files', # full path to your files
+	# 'URL': 'http://mydomain.tld/path/to/files' # can be absolute or relative
+	'root': '.',
+	'URL': '.',
 	## other options
 	'debug': True,
 	# 'fileURL': False,  # download files using connector, no direct urls to files
@@ -29,8 +36,9 @@ opts = {
 	# },
 	# 'uploadDeny': ['image', 'application'],
 	# 'uploadAllow': ['image/png', 'image/jpeg'],
-	# 'uploadOrder': ['deny', 'allow']
-	# 'disabled': ['rename', 'quicklook', 'upload']
+	# 'uploadOrder': ['deny', 'allow'],
+	# 'disabled': ['rename', 'quicklook', 'upload'],
+	# 'disabled': ['archive', 'extract'], # this will also disable archivers check
 }
 
 
