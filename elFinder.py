@@ -1008,10 +1008,10 @@ class connector():
 		self.__checkArchivers()
 
 		if (
-			not self._options['archivers']['create'] or not 'type' in self._request
+			not self._options['archivers']['create']
+			or not 'type' in self._request
 			or not 'current' in self._request
 			or not 'targets[]' in self._request
-			or not 'name' in self._request
 			):
 			self._response['error'] = 'Invalid parameters'
 			return
@@ -1041,7 +1041,7 @@ class connector():
 
 		arc = self._options['archivers']['create'][archiveType]
 		if len(realFiles) > 1:
-			archiveName = self._request['name']
+			archiveName = 'Archive'
 		else:
 			archiveName = realFiles[0]
 		archiveName += '.' + arc['ext']
