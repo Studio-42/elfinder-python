@@ -119,8 +119,9 @@ class connector():
 			self._options[opt] = opts.get(opt)
 
 		self._response['debug'] = {}
-
+		self._options['URL'] = self.__checkUtf8(self._options['URL'])
 		self._options['URL'] = self._options['URL'].rstrip('/')
+		self._options['root'] = self.__checkUtf8(self._options['root'])
 		self._options['root'] = self._options['root'].rstrip(os.sep)
 		self.__debug('URL', self._options['URL'])
 		self.__debug('root', self._options['root'])
@@ -275,7 +276,7 @@ class connector():
 		else:
 			path = self._options['root']
 
-			if 'target' in self._request:
+			if 'target' in self._request and self._request['target']:
 				target = self.__findDir(self._request['target'], None)
 				if not target:
 					self._response['error'] = 'Invalid parameters'
@@ -1093,7 +1094,7 @@ class connector():
 		cmd = [arc['cmd']]
 		for a in arc['argc'].split():
 			cmd.append(a)
-		cmd.append(curFile)
+		cmd.append(os.path.basename(curFile))
 
 		curCwd = os.getcwd()
 		os.chdir(curDir)
@@ -1318,7 +1319,7 @@ class connector():
 	def __path2url(self, path):
 		curDir = path
 		length = len(self._options['root'])
-		url = str(self._options['URL'] + curDir[length:]).replace(os.sep, '/')
+		url = self.__checkUtf8(self._options['URL'] + curDir[length:]).replace(os.sep, '/')
 
 		try:
 			import urllib
